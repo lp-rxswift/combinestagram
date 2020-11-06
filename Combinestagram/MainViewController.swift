@@ -11,6 +11,7 @@ class MainViewController: UIViewController {
 
   private let disposeBag = DisposeBag()
   private let images = BehaviorRelay<[UIImage]>(value: [])
+  private let alert = PublishRelay<(String, String?)>()
 
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -25,6 +26,12 @@ class MainViewController: UIViewController {
         self?.updateUI(photos: photos)
       })
       .disposed(by: disposeBag)
+
+    alert
+      .subscribe(onNext: { [weak self] alert in
+        self?.showMessage(alert)
+      })
+      .disposed(by: disposeBag)
   }
   
   @IBAction func actionClear() {
@@ -35,10 +42,10 @@ class MainViewController: UIViewController {
     guard let image = imagePreview.image else { return }
     PhotoWriter.save(image)
       .subscribe(onSuccess: { [weak self] id in
-          self?.showMessage("Saved with id: \(id)")
-          self?.actionClear()
-        }, onError: { [weak self] error in
-          self?.showMessage("Error", description: error.localizedDescription)
+        self?.alert.accept((id, nil))
+        self?.actionClear()
+      }, onError: { [weak self] error in
+        self?.alert.accept((error.localizedDescription, nil))
       })
       .disposed(by: disposeBag)
   }
@@ -56,10 +63,12 @@ class MainViewController: UIViewController {
     navigationController!.pushViewController(photosViewController, animated: true)
   }
 
-  func showMessage(_ title: String, description: String? = nil) {
-    let alert = UIAlertController(title: title, message: description, preferredStyle: .alert)
-    alert.addAction(UIAlertAction(title: "Close", style: .default, handler: { [weak self] _ in self?.dismiss(animated: true, completion: nil)}))
-    present(alert, animated: true, completion: nil)
+  func showMessage(_ message: (String, String?)) {
+    DispatchQueue.main.async { [weak self] in
+      let alert = UIAlertController(title: message.0, message: message.1, preferredStyle: .alert)
+      alert.addAction(UIAlertAction(title: "Close", style: .default, handler: { [weak self] _ in self?.dismiss(animated: true, completion: nil)}))
+      self?.present(alert, animated: true, completion: nil)
+    }
   }
 
   private func updateUI(photos: [UIImage]) {
