@@ -36,12 +36,15 @@ class MainViewController: UIViewController {
   }
 
   @IBAction func actionAdd() {
-//    let newImages = images.value
-//      + [UIImage(named: "IMG_1907.jpg")!]
-//    images.accept(newImages)
-
     let photosViewController = storyboard!
       .instantiateViewController(identifier: "PhotosViewController") as! PhotosViewController
+    photosViewController.selectedPhotos
+      .subscribe(onNext: { [weak self] newImage in
+        guard let images  = self?.images else { return }
+        images.accept(images.value + [newImage])
+      }, onDisposed: {
+        print("Completed photo selection")
+      }).disposed(by: disposeBag)
     navigationController!.pushViewController(photosViewController, animated: true)
   }
 
