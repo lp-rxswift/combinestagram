@@ -57,6 +57,10 @@ class MainViewController: UIViewController {
       .instantiateViewController(identifier: "PhotosViewController") as! PhotosViewController
     let newPhotos = photosViewController.selectedPhotos.share()
     newPhotos
+      .takeWhile({ [weak self] image in
+        let count = self?.images.value.count ?? 0
+        return count < 6
+      })
       .filter { newImage in
         return newImage.size.width > newImage.size.height }
       .filter { [weak self] newImage in
