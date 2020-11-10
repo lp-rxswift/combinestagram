@@ -12,6 +12,7 @@ class PhotosViewController: UICollectionViewController {
   private let selectedPhotosSubject = PublishSubject<UIImage>()
   private lazy var photos = PhotosViewController.loadPhotos()
   private lazy var imageManager = PHCachingImageManager()
+  private let bag = DisposeBag()
 
   private lazy var thumbnailSize: CGSize = {
     let cellSize = (self.collectionViewLayout as! UICollectionViewFlowLayout).itemSize
@@ -28,7 +29,17 @@ class PhotosViewController: UICollectionViewController {
   // MARK: View Controller
   override func viewDidLoad() {
     super.viewDidLoad()
-
+    let authorized = PHPhotoLibrary.authorized.share()
+    authorized
+      .skipWhile({ !$0 })
+      .take(1)
+      .subscribe(onNext: { [weak self] _ in
+        self?.photos = PhotosViewController.loadPhotos()
+        DispatchQueue.main.async {
+          self?.collectionView?.reloadData()
+        }
+      })
+      .disposed(by: bag)
   }
 
   override func viewWillDisappear(_ animated: Bool) {
