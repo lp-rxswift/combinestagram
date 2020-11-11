@@ -16,14 +16,15 @@ class MainViewController: UIViewController {
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    images
+    let imagesObservable = images.share()
+    imagesObservable
       .throttle(.milliseconds(500), scheduler: MainScheduler.instance)
       .subscribe(onNext: { [weak imagePreview] photos in
         guard let preview = imagePreview else { return }
         preview.image = photos.collage(size: preview.frame.size)})
       .disposed(by: disposeBag)
 
-    images
+    imagesObservable
       .subscribe(onNext: { [weak self] photos in
         self?.updateUI(photos: photos)
       })
