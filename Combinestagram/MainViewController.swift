@@ -40,6 +40,7 @@ class MainViewController: UIViewController {
   @IBAction func actionClear() {
     images.accept([])
     imageCache = []
+    updateNavigationIcon()
   }
 
   @IBAction func actionSave() {
